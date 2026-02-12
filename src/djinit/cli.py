@@ -1,6 +1,7 @@
 """CLI entry point for djinit."""
 
 import argparse
+import getpass
 import sys
 
 from djinit import __version__
@@ -20,7 +21,7 @@ def _valid_project_name(value):
 def build_parser():
     parser = argparse.ArgumentParser(
         prog="djinit",
-        description="Scaffold a new Django project with CFAI standard template structure.",
+        description="Production-ready Django project scaffolding in one command.",
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
 
@@ -34,7 +35,7 @@ def build_parser():
     parser.add_argument("--python-version", default="3.12", help="Python version (default: 3.12)")
     parser.add_argument("--django-version", default="5.2", help="Django version (default: 5.2)")
     parser.add_argument("--drf-version", default="3.16", help="DRF version (default: 3.16)")
-    parser.add_argument("--author", default="CFAI", help="Author name (default: CFAI)")
+    parser.add_argument("--author", default=getpass.getuser(), help="Author name (default: system username)")
     parser.add_argument("--description", default="", help="Project description")
     parser.add_argument("--output-dir", default=".", help="Output directory (default: current dir)")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be created without writing files")

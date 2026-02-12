@@ -1,5 +1,7 @@
 """Tests for the CLI module."""
 
+import getpass
+
 import pytest
 
 from djinit.cli import build_parser, main, _valid_project_name
@@ -34,7 +36,7 @@ class TestBuildParser:
         assert args.python_version == "3.12"
         assert args.django_version == "5.2"
         assert args.drf_version == "3.16"
-        assert args.author == "CFAI"
+        assert args.author == getpass.getuser()
         assert args.description == ""
         assert args.output_dir == "."
         assert not args.dry_run

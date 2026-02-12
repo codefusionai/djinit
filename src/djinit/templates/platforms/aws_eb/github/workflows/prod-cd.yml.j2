@@ -115,9 +115,6 @@ jobs:
           tags: |
             {% raw %}${{ steps.meta.outputs.image_primary }}{% endraw %}
 
-          build-args: |
-            GH_TOKEN={% raw %}${{ secrets.GH_TOKEN }}{% endraw %}
-
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

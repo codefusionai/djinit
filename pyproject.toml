@@ -5,9 +5,35 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "djinit"
 version = "0.1.0"
-description = "Django project scaffolding CLI with CFAI standard template structure"
+description = "Production-ready Django project scaffolding in one command"
 requires-python = ">=3.10"
+license = {text = "MIT"}
+readme = "README.md"
+authors = [
+    {name = "Pranto", email = "prantoamt@gmail.com"},
+]
+keywords = ["django", "scaffolding", "cli", "drf", "project-template", "boilerplate"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Framework :: Django",
+    "Framework :: Django :: 5.2",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Code Generators",
+]
 dependencies = ["jinja2>=3.1"]
+
+[project.urls]
+Homepage = "https://github.com/prantoamt/djinit"
+Repository = "https://github.com/prantoamt/djinit"
+Issues = "https://github.com/prantoamt/djinit/issues"
+Changelog = "https://github.com/prantoamt/djinit/blob/main/CHANGELOG.md"
 
 [project.scripts]
 djinit = "djinit.cli:main"

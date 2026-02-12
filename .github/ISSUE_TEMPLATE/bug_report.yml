@@ -1,0 +1,47 @@
+name: Bug Report
+description: Report a bug in djinit
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened? What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Minimal command or steps to trigger the bug.
+      placeholder: |
+        djinit myproject --platform aws-eb
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output / Error
+      description: Paste the terminal output or traceback.
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: djinit version
+      description: Output of `djinit --version`
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      description: Output of `python --version`
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - macOS
+        - Linux
+        - Windows
+        - Other

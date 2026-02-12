@@ -100,6 +100,77 @@ feat-branch --> PR (auto-labeled) --> development --> main
 
 No manual release steps. Branch naming drives everything.
 
+### CI/CD Setup
+
+**CI (pull requests)** -- runs automatically, no configuration needed. Tests run against a Postgres service container with hardcoded credentials.
+
+{% if platform == "aws-eb" -%}
+**CD (deployment)** -- requires two GitHub repository secrets:
+
+| Secret | Description |
+|--------|-------------|
+| `AWS_ACCOUNT_ID` | Your 12-digit AWS account ID |
+| `AWS_REGION` | Deployment region (e.g. `eu-central-1`) |
+
+The CD workflows authenticate via **OIDC federation** (no static AWS keys). Create an IAM role named `GHA-EB-Deploy` with:
+- **Trusted entity**: GitHub Actions OIDC provider for your repository
+- **Permissions**: Elastic Beanstalk, ECR, and S3 access
+
+{% endif -%}
+### Environment Variables
+
+All app configuration is via environment variables. See `.env` for local defaults. Key variables:
+
+| Variable | Description |
+|----------|-------------|
+| `SECRET_KEY` | Django secret key (change in production) |
+| `DEBUG` | `True` for development, `False` in production |
+| `ALLOWED_HOSTS` | Comma-separated list of allowed hostnames |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated list of allowed CORS origins |
+| `CSRF_TRUSTED_ORIGINS` | Comma-separated list of trusted CSRF origins |
+| `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` | PostgreSQL connection |
+{% if platform == "aws-eb" -%}
+| `CELERY_BROKER_URL` | SQS URL in production, local SQS/Redis in dev |
+| `USE_S3` | `True` to use S3 storage, `False` for local filesystem |
+| `AWS_STORAGE_BUCKET_NAME` | S3 bucket for static/media files |
+{% else -%}
+| `CELERY_BROKER_URL` | Redis URL for Celery broker |
+{% endif -%}
+| `SUPERUSER_EMAIL`, `SUPERUSER_PASSWORD` | Auto-created superuser credentials |
+| `ACCESS_TOKEN_LIFETIME_MINUTES` | JWT access token lifetime (default: 60) |
+| `REFRESH_TOKEN_LIFETIME_MINUTES` | JWT refresh token lifetime (default: 1440) |
+| `SECURE_SSL_REDIRECT` | Auto-enabled in production (`DEBUG=False`) |
+{% if platform == "aws-eb" %}
+
+### Log Whisperer (optional)
+
+[log-whisperer](https://pypi.org/project/log-whisperer/) monitors container logs for anomalies after each deployment. It is **disabled by default** — set `LOG_WHISPERER_ENABLED=true` in your EB environment to activate.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LOG_WHISPERER_ENABLED` | `false` | Master switch |
+| `LOG_WHISPERER_CRON_INTERVAL` | `15` | Check interval in minutes |
+| `LOG_WHISPERER_MIN_SEVERITY` | `WARN` | Minimum severity to report |
+| `LOG_WHISPERER_BASELINE_MINUTES` | `30` | Learning window after deploy (suppresses alerts) |
+
+Configure at least one notification channel:
+
+| Variable | Description |
+|----------|-------------|
+| `LOG_WHISPERER_NTFY_TOPIC` | [ntfy](https://ntfy.sh) topic name |
+| `LOG_WHISPERER_NTFY_URL` | Custom ntfy server URL (optional) |
+| `LOG_WHISPERER_TELEGRAM_TOKEN` | Telegram bot token |
+| `LOG_WHISPERER_TELEGRAM_CHAT` | Telegram chat ID |
+| `LOG_WHISPERER_EMAIL_TO` | Email recipient |
+| `LOG_WHISPERER_EMAIL_FROM` | Sender address |
+| `LOG_WHISPERER_SMTP_HOST` | SMTP server hostname |
+| `LOG_WHISPERER_SMTP_PORT` | SMTP server port |
+| `LOG_WHISPERER_SMTP_USER` | SMTP username |
+| `LOG_WHISPERER_SMTP_PASSWORD` | SMTP password |
+
+These are set as EB environment variables (not GitHub Secrets).
+{% endif %}
+
 ## Stack
 
 - Python {{ python_version }}, Django {{ django_version }}, DRF {{ drf_version }}
