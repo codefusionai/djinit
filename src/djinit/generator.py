@@ -2,7 +2,9 @@
 
 import json
 import os
+import shutil
 import stat
+import subprocess
 from pathlib import Path
 
 from djinit.manifest import get_manifest
@@ -43,6 +45,22 @@ def generate(context, output_dir=".", platform=None):
     config_path = project_path / ".djinit.json"
     config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
     print(f"  created .djinit.json")
+
+    # Run pdm lock to pin dependency versions
+    if shutil.which("pdm"):
+        print("\nRunning pdm lock to pin dependencies...")
+        result = subprocess.run(
+            ["pdm", "lock"],
+            cwd=project_path,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            print("  pdm.lock created")
+        else:
+            print(f"  pdm lock failed (you can run it manually): {result.stderr.strip()}")
+    else:
+        print("\nNote: pdm not found — run 'pdm lock' after installing PDM to pin dependencies.")
 
     print(f"\nProject {project_name} created at {project_path.resolve()}")
     print(f"\nNext steps:")
