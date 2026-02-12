@@ -33,13 +33,17 @@ COMMON_MANIFEST = {
     "dotenv.j2": (".env", UpdateGroup.ROOT),
     "gitignore": (".gitignore", UpdateGroup.ROOT),
     "README.md.j2": ("README.md", UpdateGroup.ROOT),
+    "CONTRIBUTING.md.j2": ("CONTRIBUTING.md", UpdateGroup.ROOT),
+    "CHANGELOG.md": ("CHANGELOG.md", UpdateGroup.ROOT),
     "pyproject.toml.j2": ("pyproject.toml", UpdateGroup.ROOT),
     "manage.py": ("manage.py", UpdateGroup.ROOT),
     "conftest.py.j2": ("conftest.py", UpdateGroup.ROOT),
 
     # CI (.github/)
     "github/copilot-instructions.md.j2": (".github/copilot-instructions.md", UpdateGroup.CI),
+    "github/release.yml": (".github/release.yml", UpdateGroup.CI),
     "github/workflows/ci.yml.j2": (".github/workflows/ci.yml", UpdateGroup.CI),
+    "github/workflows/auto-label.yml": (".github/workflows/auto-label.yml", UpdateGroup.CI),
 
     # main/ app
     "main/__init__.py": ("main/__init__.py", UpdateGroup.APP_MAIN),

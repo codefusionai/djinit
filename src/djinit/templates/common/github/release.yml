@@ -1,0 +1,14 @@
+changelog:
+  categories:
+    - title: "\U0001F680 Features"
+      labels: [feature]
+    - title: "\U0001F41B Bug Fixes"
+      labels: [fix]
+    - title: "\U0001F4A5 Breaking Changes"
+      labels: [breaking]
+    - title: "\U0001F9F0 Maintenance"
+      labels: [chore, dependencies]
+    - title: "\U0001F4DA Documentation"
+      labels: [documentation]
+    - title: "Other Changes"
+      labels: ["*"]

@@ -1,0 +1,41 @@
+# Contributing to {{ project_name }}
+
+## Workflow
+
+We follow **trunk-based development** with two long-lived branches:
+
+| Branch | Purpose |
+|--------|---------|
+| `development` | Integration branch — all feature branches merge here via PR |
+| `main` | Production — merges from `development` only |
+
+## Branch Naming
+
+Branch names **must** start with a conventional commit prefix followed by a hyphen:
+
+| Prefix | Use for | Example |
+|--------|---------|---------|
+| `feat` | New features | `feat-user-onboarding` |
+| `fix` | Bug fixes | `fix-login-timeout` |
+| `breaking` | Breaking changes | `breaking-remove-v1-api` |
+| `chore` | Maintenance, deps, CI | `chore-upgrade-django` |
+| `docs` | Documentation only | `docs-api-examples` |
+
+This prefix is used to **auto-label PRs**, which feeds directly into release notes and the changelog — no manual labeling needed.
+
+## Pull Request Process
+
+1. Create a branch from `development` using the naming convention above.
+2. Open a PR targeting `development`.
+3. The CI workflow runs linting and tests automatically.
+4. A label is applied automatically based on your branch prefix.
+5. After review and approval, squash-merge into `development`.
+
+## Release Flow
+
+Releases are automated through the CD pipelines:
+
+- **Push to `development`** → deploys to dev, creates a **draft GitHub release** with auto-generated notes grouped by label.
+- **Push to `main`** → deploys to production, **publishes** the draft release, and updates `CHANGELOG.md`.
+
+No manual release steps required.

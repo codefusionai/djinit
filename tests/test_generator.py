@@ -52,6 +52,8 @@ class TestGenerate:
         assert (project_dir / "main" / "celery.py").exists()
         assert (project_dir / "base" / "models.py").exists()
         assert (project_dir / "base" / "views.py").exists()
+        assert (project_dir / "CONTRIBUTING.md").exists()
+        assert (project_dir / "CHANGELOG.md").exists()
 
     def test_creates_github_workflows(self, tmp_path, context):
         generate(context, str(tmp_path))
@@ -59,7 +61,9 @@ class TestGenerate:
         assert (project_dir / ".github" / "workflows" / "ci.yml").exists()
         assert (project_dir / ".github" / "workflows" / "dev-cd.yml").exists()
         assert (project_dir / ".github" / "workflows" / "prod-cd.yml").exists()
+        assert (project_dir / ".github" / "workflows" / "auto-label.yml").exists()
         assert (project_dir / ".github" / "copilot-instructions.md").exists()
+        assert (project_dir / ".github" / "release.yml").exists()
 
     def test_creates_platform_hooks(self, tmp_path, context):
         generate(context, str(tmp_path))
@@ -107,12 +111,30 @@ class TestGenerate:
         assert "testproject:" in ci
         assert "comvado" not in ci.lower()
 
+    def test_template_substitution_contributing(self, tmp_path, context):
+        generate(context, str(tmp_path))
+        contributing = (tmp_path / "testproject" / "CONTRIBUTING.md").read_text()
+        assert "testproject" in contributing
+        assert "trunk-based" in contributing.lower()
+        assert "feat" in contributing
+
     def test_template_substitution_cd(self, tmp_path, context):
         generate(context, str(tmp_path))
         dev_cd = (tmp_path / "testproject" / ".github" / "workflows" / "dev-cd.yml").read_text()
         assert "ECR_REPO: testproject" in dev_cd
         assert "testproject-${VERSION_LABEL}.zip" in dev_cd
         assert "comvado" not in dev_cd.lower()
+
+    def test_cd_uses_git_tags_not_release_drafter(self, tmp_path, context):
+        generate(context, str(tmp_path))
+        project_dir = tmp_path / "testproject" / ".github" / "workflows"
+        dev_cd = (project_dir / "dev-cd.yml").read_text()
+        prod_cd = (project_dir / "prod-cd.yml").read_text()
+        assert "release-drafter" not in dev_cd
+        assert "release-drafter" not in prod_cd
+        assert "git describe --tags" in dev_cd
+        assert "gh release create" in dev_cd
+        assert "CHANGELOG.md" in prod_cd
 
     def test_sh_files_are_executable(self, tmp_path, context):
         generate(context, str(tmp_path))

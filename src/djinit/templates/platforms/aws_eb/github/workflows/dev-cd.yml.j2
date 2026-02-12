@@ -28,24 +28,29 @@ permissions:
   pull-requests: write
 
 jobs:
-  draft_release:
-    name: Compute next version (Release Drafter)
+  compute_version:
+    name: Compute next version
     runs-on: ubuntu-latest
     outputs:
-      tag: "{% raw %}${{ steps.draft.outputs.tag_name }}{% endraw %}"
+      tag: "{% raw %}${{ steps.version.outputs.tag }}{% endraw %}"
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - id: draft
-        uses: release-drafter/release-drafter@v6
-        env:
-          GITHUB_TOKEN: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
-
+      - name: Compute next version from git tags
+        id: version
+        run: |
+          LATEST=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          MAJOR=$(echo "$LATEST" | sed 's/^v//' | cut -d. -f1)
+          MINOR=$(echo "$LATEST" | sed 's/^v//' | cut -d. -f2)
+          PATCH=$(echo "$LATEST" | sed 's/^v//' | cut -d. -f3)
+          NEXT="v${MAJOR}.${MINOR}.$((PATCH + 1))"
+          echo "tag=${NEXT}" >> "$GITHUB_OUTPUT"
+          echo "Next version: ${NEXT} (latest: ${LATEST})"
 
   build_and_publish:
     name: Build image & create EB app version (once)
     runs-on: ubuntu-latest
-    needs: [draft_release]
+    needs: [compute_version]
     outputs:
       version_label: {% raw %}${{ steps.meta.outputs.version_label }}{% endraw %}
 
@@ -74,10 +79,7 @@ jobs:
         run: |
           REG="{% raw %}${{ steps.ecr.outputs.registry }}{% endraw %}"
           IMAGE="${REG}/{% raw %}${{ env.ECR_REPO }}{% endraw %}"
-          TAG="{% raw %}${{ env.PLATFORM_ENV }}{% endraw %}-{% raw %}${{ needs.draft_release.outputs.tag }}{% endraw %}"
-          if [ -z "$TAG" ] || [ "$TAG" = "null" ]; then
-            TAG="{% raw %}${{ env.PLATFORM_ENV }}{% endraw %}-sha-${GITHUB_SHA::7}"
-          fi
+          TAG="{% raw %}${{ env.PLATFORM_ENV }}{% endraw %}-{% raw %}${{ needs.compute_version.outputs.tag }}{% endraw %}"
           VERSION_LABEL="${TAG}-build-${GITHUB_RUN_NUMBER}"
           ZIP_KEY="{{ project_name }}-${VERSION_LABEL}.zip"
           echo "image_primary=${IMAGE}:${VERSION_LABEL}" >> $GITHUB_OUTPUT
@@ -232,3 +234,32 @@ jobs:
           aws elasticbeanstalk describe-environments \
             --environment-names "$ENV_NAME" \
             --query 'Environments[0].[EnvironmentName,Health,HealthStatus,Status,EndpointURL,VersionLabel]' --output table
+
+  draft_release:
+    name: Create draft release
+    runs-on: ubuntu-latest
+    needs: [compute_version, deploy_to_envs]
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Create or update draft release
+        env:
+          GH_TOKEN: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
+        run: |
+          TAG="{% raw %}${{ needs.compute_version.outputs.tag }}{% endraw %}"
+
+          # Delete existing draft for this tag (if any) so we get fresh notes
+          EXISTING=$(gh release view "$TAG" --json isDraft --jq '.isDraft' 2>/dev/null || echo "")
+          if [ "$EXISTING" = "true" ]; then
+            gh release delete "$TAG" --yes
+            git tag -d "$TAG" 2>/dev/null || true
+            git push origin ":refs/tags/$TAG" 2>/dev/null || true
+          fi
+
+          gh release create "$TAG" \
+            --draft \
+            --generate-notes \
+            --target development \
+            --title "$TAG"
+          echo "Draft release created for $TAG"
