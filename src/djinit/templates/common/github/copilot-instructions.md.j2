@@ -2,59 +2,46 @@
 
 {{ description }}
 
-## General Guidelines
+## Architecture
 
-* Follow the existing code style and structure.
-* Use descriptive variable, function, and class names.
-* Write clear, concise **docstrings** for all modules, classes, and functions.
-* Add comments where necessary to explain complex logic.
-* Prefer explicit over implicit code.
-* Use environment variables and settings from Django's `settings.py` for configuration.
-* **Never hardcode** URLs, secrets, magic numbers, or credentials.
-* Favor readability and maintainability over cleverness.
+* **Service layer pattern** — business logic goes in `base/services/`, not in views or serializers. Views handle HTTP, serializers handle validation, services handle logic.
+* **Dependency injection** — use `dependency-injector` via `base/containers.py` to wire services. Do not instantiate services directly in views.
+* **Models** — inherit from `base.models.TimeStampMixin` for `created_at`/`updated_at` on all models.
+* **Error handling** — `drf-standardized-errors` is configured globally. Raise DRF exceptions (`ValidationError`, `NotFound`, etc.) — do not return ad-hoc error dicts.
+* **API docs** — `drf-spectacular` auto-generates OpenAPI schemas. Use `@extend_schema()` to document endpoints. Swagger UI is at `/schema/swagger/` in DEBUG mode.
+* **Task queue** — Celery tasks go in `<app>/tasks.py`. Task status can be checked via the built-in `/task-status/?task_id=<id>` endpoint.
 
----
+## Code Style
 
-## Python/Django Specific
-
-* Use Django's ORM and built-in utilities where possible.
-* Never use function base views; always use class-based views.
-* Place business logic in **models or services**, not directly in views.
-* Use serializers for API data validation and transformation.
-* Write tests for **all new features and bug fixes**.
-* Use `settings.<SETTING_NAME>` for all environment-dependent values.
-
----
+* Always use **class-based views** (never function-based views).
+* **All functions and methods must have type hints** for arguments and return types. Docstrings are optional.
+* Use `settings.<SETTING_NAME>` in app code to access config. Only `settings.py` should read from `os.environ` / `env()` directly.
+* Use serializers for all API input validation and response shaping.
+* Use `reverse()` to resolve URLs — never hardcode URL paths.
 
 ## Testing
 
-* Use **pytest** with **pytest-django** and DRF's **APIClient**.
-* Put tests under `tests/` inside each app.
-* File names start with `test_*.py`; test function names start with `test_`.
-* Use **behavior-driven names**: `test_<unit_or_endpoint>_when_<condition>_then_<expected_result>`
-
-### Fixtures & setup
-
-* Put reusable fixtures in `conftest.py`.
-* Use factories to keep setup minimal and explicit.
-
-### Database usage
-
+* Use **pytest** with **pytest-django** and DRF's `APIClient`.
+* App-specific tests live in `<app>/tests/` (e.g., `base/tests/test_views.py`). Top-level `tests/` is for integration/cross-app tests.
+* Naming: `test_<unit_or_endpoint>_when_<condition>_then_<expected_result>`.
 * Mark DB tests with `@pytest.mark.django_db`.
+* Put reusable fixtures in `conftest.py`; use `factory-boy` for model factories.
+* Coverage threshold is **80%** — `pdm run pytest` enforces this automatically.
 
-### DRF / URL usage
+## Tooling
 
-* Resolve URLs with `reverse`.
-* Use `APIClient` for requests and always assert status codes.
+* `pdm run lint-check` — black + isort + pylint (CI runs this)
+* `pdm run format` — auto-format with black + isort
+* `pdm run setup-hooks` — install pre-commit hooks (black + isort on every commit)
+* `pdm run pytest` — run tests with coverage
 
----
+## Branch Naming & Commits
 
-## Commit Messages
+Branches must start with a conventional prefix — this drives auto-labeling and changelog generation:
 
-* Follow [Conventional Commits](https://www.conventionalcommits.org/) format.
-* Use a **scope** to indicate the module/domain.
-* Examples:
-  * `fix(user): prevent duplicate signup when email exists`
-  * `feat(base): add new service endpoint`
+* `feat-<name>`, `fix-<name>`, `breaking-<name>`, `chore-<name>`, `docs-<name>`
 
----
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+* `feat(base): add user profile endpoint`
+* `fix(auth): prevent duplicate signup when email exists`

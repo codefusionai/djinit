@@ -2,15 +2,22 @@ DEBUG="True"
 SECRET_KEY="change-me-to-a-real-secret-key"
 ALLOWED_HOSTS="localhost,127.0.0.1"
 CORS_ALLOWED_ORIGINS="http://localhost:5173"
-SUPERUSER_PASSWORD="change-me"
+CSRF_TRUSTED_ORIGINS="http://localhost:5173"
 
+# Auth
+SUPERUSER_EMAIL="admin@example.com"
+SUPERUSER_PASSWORD="change-me"
+ACCESS_TOKEN_LIFETIME_MINUTES="60"
+REFRESH_TOKEN_LIFETIME_MINUTES="1440"
+
+# Database
 DB_NAME="{{ project_name }}_db"
 DB_USER="superuser"
 DB_PASSWORD="password"
 DB_HOST="localhost"
 DB_PORT="5432"
 
-#celery
+# Celery
 {% if platform == "aws-eb" -%}
 CELERY_BROKER_URL="sqs://x:x@localhost:9324/"
 AWS_REGION_NAME="elasticmq"

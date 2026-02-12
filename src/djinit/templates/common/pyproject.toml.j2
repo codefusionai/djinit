@@ -41,8 +41,13 @@ license = {text = "Other"}
 [tool.pdm.dev-dependencies]
 lint = [
     "black>=25.1.0",
+    "isort>=5.12.0",
     "pylint>=3.2.0",
-    "pylint-django==2.6.1"
+    "pylint-django==2.6.1",
+    "pre-commit>=4.0.0",
+]
+test = [
+    "pytest-cov>=6.0",
 ]
 
 
@@ -52,8 +57,14 @@ distribution = false
 [tool.pdm.scripts]
 lint-check = { composite = [
   "black --check .",
+  "isort --check-only .",
   "pylint ."
 ] }
+format = { composite = [
+  "black .",
+  "isort ."
+] }
+setup-hooks = "pre-commit install"
 collectstatic = "python manage.py collectstatic --no-input"
 makemigrations = "python manage.py makemigrations"
 migrate = "python manage.py migrate"
@@ -68,11 +79,13 @@ DJANGO_SETTINGS_MODULE = "main.settings"
 pythonpath = ["."]
 testpaths = [
 "tests",
+"base",
 ]
 markers = [
     "integration: mark a test as an integration test.",
     "unit: mark a test as a unit test.",
 ]
+addopts = "--cov=. --cov-report=term-missing --cov-fail-under=80"
 
 [tool.black]
 line-length = 140
@@ -116,7 +129,7 @@ disable = [
 
 [tool.isort]
 profile = "black"
-line_length = 90
+line_length = 140
 [dependency-groups]
 dev = [
     "pytest-django>=4.11.1",

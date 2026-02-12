@@ -1,5 +1,6 @@
 """Base views module."""
 
+from django.db import connection
 from celery.result import AsyncResult
 from drf_spectacular.utils import (
     OpenApiExample,
@@ -8,10 +9,32 @@ from drf_spectacular.utils import (
     extend_schema,
 )
 from rest_framework.exceptions import APIException, ValidationError
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK
+from rest_framework.status import HTTP_200_OK, HTTP_503_SERVICE_UNAVAILABLE
 from rest_framework.views import APIView
+
+
+class HealthCheckView(APIView):
+    """Readiness check that verifies database connectivity."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    @extend_schema(
+        summary="Health Check",
+        description="Returns 200 if the service and database are healthy, 503 otherwise.",
+        responses={
+            HTTP_200_OK: OpenApiResponse(description="Service is healthy."),
+            HTTP_503_SERVICE_UNAVAILABLE: OpenApiResponse(description="Service is unhealthy."),
+        },
+    )
+    def get(self, request, *args, **kwargs):
+        try:
+            connection.ensure_connection()
+        except Exception:
+            return Response({"status": "unhealthy", "db": "unreachable"}, status=HTTP_503_SERVICE_UNAVAILABLE)
+        return Response({"status": "healthy"}, status=HTTP_200_OK)
 
 
 class TaskStatusView(APIView):

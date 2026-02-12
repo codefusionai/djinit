@@ -54,6 +54,8 @@ class TestGenerate:
         assert (project_dir / "base" / "views.py").exists()
         assert (project_dir / "CONTRIBUTING.md").exists()
         assert (project_dir / "CHANGELOG.md").exists()
+        assert (project_dir / "docker-compose.yml").exists()
+        assert (project_dir / ".pre-commit-config.yaml").exists()
 
     def test_creates_github_workflows(self, tmp_path, context):
         generate(context, str(tmp_path))
@@ -64,6 +66,7 @@ class TestGenerate:
         assert (project_dir / ".github" / "workflows" / "auto-label.yml").exists()
         assert (project_dir / ".github" / "copilot-instructions.md").exists()
         assert (project_dir / ".github" / "release.yml").exists()
+        assert (project_dir / ".github" / "PULL_REQUEST_TEMPLATE.md").exists()
 
     def test_creates_platform_hooks(self, tmp_path, context):
         generate(context, str(tmp_path))
@@ -104,6 +107,26 @@ class TestGenerate:
         dockerfile = (tmp_path / "testproject" / "Dockerfile").read_text()
         assert "python:3.12-slim" in dockerfile
         assert "company-auth" not in dockerfile
+
+    def test_dockerfile_runs_as_non_root(self, tmp_path, context):
+        generate(context, str(tmp_path))
+        dockerfile = (tmp_path / "testproject" / "Dockerfile").read_text()
+        assert "USER appuser" in dockerfile
+
+    def test_settings_security_headers(self, tmp_path, context):
+        generate(context, str(tmp_path))
+        settings = (tmp_path / "testproject" / "main" / "settings.py").read_text()
+        assert "SECURE_HSTS_SECONDS" in settings
+        assert "SESSION_COOKIE_SECURE" in settings
+        assert "CSRF_COOKIE_SECURE" in settings
+        assert "CONN_MAX_AGE" in settings
+
+    def test_health_check_endpoint(self, tmp_path, context):
+        generate(context, str(tmp_path))
+        views = (tmp_path / "testproject" / "base" / "views.py").read_text()
+        urls = (tmp_path / "testproject" / "base" / "urls.py").read_text()
+        assert "HealthCheckView" in views
+        assert "health/" in urls
 
     def test_template_substitution_ci(self, tmp_path, context):
         generate(context, str(tmp_path))

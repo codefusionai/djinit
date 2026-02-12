@@ -36,11 +36,14 @@ COMMON_MANIFEST = {
     "CONTRIBUTING.md.j2": ("CONTRIBUTING.md", UpdateGroup.ROOT),
     "CHANGELOG.md": ("CHANGELOG.md", UpdateGroup.ROOT),
     "pyproject.toml.j2": ("pyproject.toml", UpdateGroup.ROOT),
+    "docker-compose.yml.j2": ("docker-compose.yml", UpdateGroup.ROOT),
+    "pre-commit-config.yaml": (".pre-commit-config.yaml", UpdateGroup.ROOT),
     "manage.py": ("manage.py", UpdateGroup.ROOT),
     "conftest.py.j2": ("conftest.py", UpdateGroup.ROOT),
 
     # CI (.github/)
     "github/copilot-instructions.md.j2": (".github/copilot-instructions.md", UpdateGroup.CI),
+    "github/PULL_REQUEST_TEMPLATE.md": (".github/PULL_REQUEST_TEMPLATE.md", UpdateGroup.CI),
     "github/release.yml": (".github/release.yml", UpdateGroup.CI),
     "github/workflows/ci.yml.j2": (".github/workflows/ci.yml", UpdateGroup.CI),
     "github/workflows/auto-label.yml": (".github/workflows/auto-label.yml", UpdateGroup.CI),
@@ -70,6 +73,7 @@ COMMON_MANIFEST = {
     "base/migrations/__init__.py": ("base/migrations/__init__.py", UpdateGroup.APP_BASE),
     "base/services/__init__.py": ("base/services/__init__.py", UpdateGroup.APP_BASE),
     "base/services/orphan_service.py": ("base/services/orphan_service.py", UpdateGroup.APP_BASE),
+    "base/tests/__init__.py": ("base/tests/__init__.py", UpdateGroup.APP_BASE),
 }
 
 PLATFORM_MANIFESTS = {

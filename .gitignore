@@ -12,3 +12,4 @@ venv/
 .mypy_cache/
 *.so
 .tox/
+CLAUDE.md
