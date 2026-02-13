@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.0.4 (2026-02-13)
+
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+
+## What's Changed
+### Bug Fixes
+* fix: add static/ directory to generated project to prevent STATICFILE… by @prantoamt in https://github.com/prantoamt/djsuite/pull/9
+
+
+**Full Changelog**: https://github.com/prantoamt/djsuite/compare/v0.0.3...v0.0.4
+
 ## v0.0.3 (2026-02-13)
 
 <!-- Release notes generated using configuration in .github/release.yml at main -->
