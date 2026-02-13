@@ -50,14 +50,32 @@ jobs:
             echo "tag=${DRAFT_TAG}" >> "$GITHUB_OUTPUT"
             echo "Using draft release tag: ${DRAFT_TAG}"
           else
-            # Fallback to git tag bump
+            # Fallback: compute semver from PR labels
             LATEST=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
             MAJOR=$(echo "$LATEST" | sed 's/^v//' | cut -d. -f1)
             MINOR=$(echo "$LATEST" | sed 's/^v//' | cut -d. -f2)
             PATCH=$(echo "$LATEST" | sed 's/^v//' | cut -d. -f3)
-            NEXT="v${MAJOR}.${MINOR}.$((PATCH + 1))"
+
+            SINCE=$(git log -1 --format=%aI "$LATEST" 2>/dev/null || echo "2000-01-01")
+            LABELS=$(gh pr list --state merged --base main \
+              --json mergedAt,labels \
+              --jq "[.[] | select(.mergedAt >= \"$SINCE\") | .labels[].name] | unique | .[]" 2>/dev/null || echo "")
+
+            BUMP="patch"
+            if echo "$LABELS" | grep -q "breaking"; then
+              BUMP="major"
+            elif echo "$LABELS" | grep -q "feature"; then
+              BUMP="minor"
+            fi
+
+            case "$BUMP" in
+              major) NEXT="v$((MAJOR + 1)).0.0" ;;
+              minor) NEXT="v${MAJOR}.$((MINOR + 1)).0" ;;
+              patch) NEXT="v${MAJOR}.${MINOR}.$((PATCH + 1))" ;;
+            esac
+
             echo "tag=${NEXT}" >> "$GITHUB_OUTPUT"
-            echo "No draft found. Fallback version: ${NEXT}"
+            echo "No draft found. Fallback: ${BUMP} bump ${LATEST} -> ${NEXT}"
           fi
 
   build_and_publish:
@@ -298,11 +316,17 @@ jobs:
             printf "# Changelog\n\nAll notable changes to this project will be documented in this file.\nThis changelog is automatically updated on each production deployment.\n\n%s\n" "$ENTRY" > CHANGELOG.md
           fi
 
-      - name: Commit CHANGELOG.md
+      - name: Update version in pyproject.toml
+        run: |
+          TAG="{% raw %}${{ needs.compute_version.outputs.tag }}{% endraw %}"
+          VERSION="${TAG#v}"
+          sed -i "s/^version = \".*\"/version = \"${VERSION}\"/" pyproject.toml
+
+      - name: Commit release updates
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md
+          git add CHANGELOG.md pyproject.toml
           git diff --cached --quiet && exit 0
-          git commit -m "docs: update CHANGELOG.md for {% raw %}${{ needs.compute_version.outputs.tag }}{% endraw %} [skip ci]"
+          git commit -m "release: {% raw %}${{ needs.compute_version.outputs.tag }}{% endraw %} [skip ci]"
           git push

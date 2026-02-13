@@ -36,16 +36,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - name: Compute next version from git tags
+      - name: Compute next semver from git tags and PR labels
         id: version
+        env:
+          GH_TOKEN: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
         run: |
           LATEST=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           MAJOR=$(echo "$LATEST" | sed 's/^v//' | cut -d. -f1)
           MINOR=$(echo "$LATEST" | sed 's/^v//' | cut -d. -f2)
           PATCH=$(echo "$LATEST" | sed 's/^v//' | cut -d. -f3)
-          NEXT="v${MAJOR}.${MINOR}.$((PATCH + 1))"
+
+          # Determine bump type from PR labels merged since last tag
+          SINCE=$(git log -1 --format=%aI "$LATEST" 2>/dev/null || echo "2000-01-01")
+          LABELS=$(gh pr list --state merged --base development \
+            --json mergedAt,labels \
+            --jq "[.[] | select(.mergedAt >= \"$SINCE\") | .labels[].name] | unique | .[]" 2>/dev/null || echo "")
+
+          BUMP="patch"
+          if echo "$LABELS" | grep -q "breaking"; then
+            BUMP="major"
+          elif echo "$LABELS" | grep -q "feature"; then
+            BUMP="minor"
+          fi
+
+          case "$BUMP" in
+            major) NEXT="v$((MAJOR + 1)).0.0" ;;
+            minor) NEXT="v${MAJOR}.$((MINOR + 1)).0" ;;
+            patch) NEXT="v${MAJOR}.${MINOR}.$((PATCH + 1))" ;;
+          esac
+
           echo "tag=${NEXT}" >> "$GITHUB_OUTPUT"
-          echo "Next version: ${NEXT} (latest: ${LATEST})"
+          echo "Bump: ${BUMP} | ${LATEST} -> ${NEXT}"
 
   build_and_publish:
     name: Build image & create EB app version (once)
