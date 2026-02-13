@@ -72,10 +72,14 @@ class TestRenderAll:
 
     def test_no_unrendered_jinja(self, context):
         """Ensure no {{ or {% remain in rendered output (except in static files that use them)."""
+        import re
+
         manifest = get_manifest(Platform.AWS_EB)
         results = render_all(manifest, context)
         for path, content in results.items():
             # Skip Dockerrun.aws.json.tmpl which uses ${IMAGE} (shell var, not jinja)
             if "Dockerrun" in path:
                 continue
-            assert "{{ " not in content and "{%" not in content, f"Unrendered Jinja2 in {path}"
+            # Strip GitHub Actions expressions (${{ ... }}) before checking
+            stripped = re.sub(r"\$\{\{.*?\}\}", "", content)
+            assert "{{ " not in stripped and "{%" not in stripped, f"Unrendered Jinja2 in {path}"
