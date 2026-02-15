@@ -24,7 +24,11 @@ def diff_summary(project_dir, output_path, new_content):
 
     diff = list(difflib.unified_diff(old_lines, new_lines, lineterm=""))
 
-    added = sum(1 for line in diff if line.startswith("+") and not line.startswith("+++"))
-    removed = sum(1 for line in diff if line.startswith("-") and not line.startswith("---"))
+    added = sum(
+        1 for line in diff if line.startswith("+") and not line.startswith("+++")
+    )
+    removed = sum(
+        1 for line in diff if line.startswith("-") and not line.startswith("---")
+    )
 
     return f"[CHANGED] (+{added}/-{removed} lines)"

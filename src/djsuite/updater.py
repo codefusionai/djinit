@@ -26,7 +26,14 @@ def _load_context(project_dir):
         config = json.load(f)
 
     # Extract context keys
-    context_keys = ["project_name", "python_version", "django_version", "drf_version", "author", "description"]
+    context_keys = [
+        "project_name",
+        "python_version",
+        "django_version",
+        "drf_version",
+        "author",
+        "description",
+    ]
     context = {k: config.get(k, "") for k in context_keys}
 
     # Read platform, defaulting to aws-eb for backwards compatibility
@@ -65,7 +72,11 @@ def run_update(project_dir, groups, no_backup=False):
         print(f"  {status:30s} {output_path}")
 
     # Filter out unchanged files
-    files_to_write = {path: content for path, content in rendered.items() if statuses[path] != "[UNCHANGED]"}
+    files_to_write = {
+        path: content
+        for path, content in rendered.items()
+        if statuses[path] != "[UNCHANGED]"
+    }
 
     if not files_to_write:
         print("\nAll files are up to date.")
@@ -82,7 +93,9 @@ def run_update(project_dir, groups, no_backup=False):
         full_path.parent.mkdir(parents=True, exist_ok=True)
         full_path.write_text(content, encoding="utf-8")
         if output_path.endswith(".sh"):
-            full_path.chmod(full_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+            full_path.chmod(
+                full_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+            )
 
     print(f"\nUpdated {len(files_to_write)} file(s).")
     return 0
